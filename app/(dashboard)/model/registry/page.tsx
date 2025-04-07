@@ -5,76 +5,82 @@ import { Metadata } from 'next';
 export type ModelProvider = 'openai' | 'anthropic' | 'custom';
 
 export type ProviderModel = {
-  id: string;
-  name: string;
-  description: string;
+  provider: string
+  model: string;
+  apiUrl: string;
 };
 
 export type RegisteredModel = {
   id: string;
   name: string;
   provider: ModelProvider;
-  modelId: string;
+  model: string;
   status: 'active' | 'inactive';
-  dateAdded: string;
-  customEndpoint?: string;
+  registeredAt: string;
+  apiUrl: string;
 };
 
 // This would be fetched from your Go API
 async function getModels(): Promise<RegisteredModel[]> {
   // In a real app, you'd fetch from your Go API
-  // const res = await fetch('https://your-api.com/models', { 
-  //   cache: 'no-store',
-  //   headers: {
-  //     'Authorization': `Bearer ${process.env.API_KEY}`
-  //   }
-  // });
-  // return res.json();
+  const res = await fetch('http://localhost:8080/model/list');
+  
+  const data = await res.json();
+  const models = data.models;
+  
+  console.log('Models:', models);
+
+  return models.map((item: any) => ({
+    id: `${item.id}`,
+    model: item.model,
+    name: item.name,
+    provider: item.provider as ModelProvider,
+    status: item.status,
+    registeredAt: new Date(item.registered_at).toISOString(),
+    apiUrl: item.api_url
+  }));
   
   // For demo purposes, returning mock data
-  return [
-    {
-      id: '1',
-      name: 'Production GPT-4',
-      provider: 'openai',
-      modelId: 'gpt-4',
-      status: 'active',
-      dateAdded: '2025-03-15'
-    },
-    {
-      id: '2',
-      name: 'Testing Claude',
-      provider: 'anthropic',
-      modelId: 'claude-3-sonnet',
-      status: 'active',
-      dateAdded: '2025-03-20'
-    }
-  ];
+  // return [
+  //   {
+  //     id: '1',
+  //     name: 'Production GPT-4',
+  //     model: 'gpt-4',
+  //     provider: 'openai',
+  //     status: 'active',
+  //     registeredAt: '2025-03-15'
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Testing Claude',
+  //     provider: 'anthropic',
+  //     model: 'claude-3-sonnet',
+  //     status: 'active',
+  //     registeredAt: '2025-03-20'
+  //   }
+  // ];
 }
+
 
 // This would be fetched from your Go API (or could be part of your API docs)
 async function getProviderModels(): Promise<Record<string, ProviderModel[]>> {
   // In a real app, you would fetch from your Go API
-  // const res = await fetch('https://your-api.com/provider-models', { 
-  //   next: { revalidate: 3600 }, // Cache for 1 hour
-  //   headers: {
-  //     'Authorization': `Bearer ${process.env.API_KEY}`
-  //   }
-  // });
-  // return res.json();
+  const res = await fetch('http://localhost:8080/model/list/providers', { 
+    next: { revalidate: 3600 }, // Cache for 1 hour
+  });
+  const data = await res.json();
   
-  // For demo purposes, returning mock data
-  return {
-    openai: [
-      { id: 'gpt-4', name: 'GPT-4', description: 'Most powerful model for complex tasks' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Fast and efficient for most tasks' }
-    ],
-    anthropic: [
-      { id: 'claude-3-opus', name: 'Claude 3 Opus', description: 'Most capable Claude model' },
-      { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', description: 'Balanced performance and efficiency' },
-      { id: 'claude-3-haiku', name: 'Claude 3 Haiku', description: 'Fast and efficient for shorter content' }
-    ]
-  };
+  const result: Partial<Record<ModelProvider, ProviderModel[]>> = {};
+
+  data.providers.forEach(({ provider, models, api_url }: { provider: string; models: string[]; api_url: string }) => {
+    result[provider as ModelProvider] = models.map((model) => ({
+      provider,
+      model,
+      apiUrl: api_url,
+    }));
+  });
+
+  return result as Record<ModelProvider, ProviderModel[]>;
 }
 
 export const metadata: Metadata = {

@@ -24,21 +24,21 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
   const [deleting, setDeleting] = useState<string | null>(null);
   const [provider, setProvider] = useState<ModelProvider>('openai');
   const [modelName, setModelName] = useState('');
-  const [selectedModelId, setSelectedModelId] = useState('');
-  const [customEndpoint, setCustomEndpoint] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [apiUrl, setApiUrl] = useState('');
   const router = useRouter();
   
   // Handle provider change
   const handleProviderChange = (value: ModelProvider) => {
     setProvider(value);
-    setSelectedModelId('');
+    setSelectedModel('');
   };
   
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!modelName || (provider !== 'custom' && !selectedModelId) || (provider === 'custom' && !customEndpoint)) {
+    if (!modelName || (provider !== 'custom' && !selectedModel) || (provider === 'custom' && !apiUrl)) {
       return;
     }
     
@@ -53,9 +53,9 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
         body: JSON.stringify({
           name: modelName,
           provider,
-          modelId: provider === 'custom' ? 'custom' : selectedModelId,
+          modelId: provider === 'custom' ? 'custom' : selectedModel,
           status: 'active',
-          ...(provider === 'custom' && { customEndpoint })
+          ...(provider === 'custom' && { apiUrl })
         }),
       });
       
@@ -70,8 +70,8 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
       
       // Reset form
       setModelName('');
-      setSelectedModelId('');
-      setCustomEndpoint('');
+      setSelectedModel('');
+      setApiUrl('');
       
       // Refresh the page to fetch fresh data from server
       router.refresh();
@@ -153,16 +153,16 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
               <div className="space-y-2">
                 <Label htmlFor="model-id">Model</Label>
                 <Select 
-                  value={selectedModelId} 
-                  onValueChange={setSelectedModelId}
+                  value={selectedModel} 
+                  onValueChange={setSelectedModel}
                 >
                   <SelectTrigger id="model-id">
                     <SelectValue placeholder="Select a model" />
                   </SelectTrigger>
                   <SelectContent>
                     {providerModels[provider]?.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.name} - {model.description}
+                      <SelectItem key={model.model} value={model.model}>
+                        {model.model} - {model.apiUrl}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -174,8 +174,8 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
                 <Input 
                   id="endpoint" 
                   placeholder="https://api.example.com/v1/completions" 
-                  value={customEndpoint}
-                  onChange={(e) => setCustomEndpoint(e.target.value)}
+                  value={apiUrl}
+                  onChange={(e) => setApiUrl(e.target.value)}
                   required={provider === 'custom'}
                 />
               </div>
@@ -229,6 +229,7 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
                       <TableHead>Model</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Added</TableHead>
+                      <TableHead>API URL</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -239,7 +240,7 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
                         <TableCell className="capitalize">{model.provider}</TableCell>
                         <TableCell>
                           {model.provider !== 'custom'
-                            ? providerModels[model.provider]?.find(m => m.id === model.modelId)?.name || model.modelId
+                            ? providerModels[model.provider]?.find(m => m.model === model.model)?.model || model.model
                             : 'Custom API'}
                         </TableCell>
                         <TableCell>
@@ -247,7 +248,8 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
                             {model.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>{model.dateAdded}</TableCell>
+                        <TableCell>{model.registeredAt}</TableCell>
+                        <TableCell>{model.apiUrl}</TableCell>
                         <TableCell className="text-right">
                           <Button 
                             variant="ghost" 
@@ -281,6 +283,7 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
                     <TableHead>Provider</TableHead>
                     <TableHead>Model</TableHead>
                     <TableHead>Added</TableHead>
+                    <TableHead>API URL</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -293,10 +296,11 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
                         <TableCell className="capitalize">{model.provider}</TableCell>
                         <TableCell>
                           {model.provider !== 'custom'
-                            ? providerModels[model.provider]?.find(m => m.id === model.modelId)?.name || model.modelId
+                            ? providerModels[model.provider]?.find(m => m.model === model.model)?.model || model.model
                             : 'Custom API'}
                         </TableCell>
-                        <TableCell>{model.dateAdded}</TableCell>
+                        <TableCell>{model.registeredAt}</TableCell>
+                        <TableCell>{model.apiUrl}</TableCell>
                         <TableCell className="text-right">
                           <Button 
                             variant="ghost" 
@@ -329,6 +333,7 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
                     <TableHead>Provider</TableHead>
                     <TableHead>Model</TableHead>
                     <TableHead>Added</TableHead>
+                    <TableHead>API URL</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -341,10 +346,11 @@ export function ModelRegistryClient({ initialModels, providerModels }: ModelRegi
                         <TableCell className="capitalize">{model.provider}</TableCell>
                         <TableCell>
                           {model.provider !== 'custom'
-                            ? providerModels[model.provider]?.find(m => m.id === model.modelId)?.name || model.modelId
+                            ? providerModels[model.provider]?.find(m => m.model === model.model)?.model || model.model
                             : 'Custom API'}
                         </TableCell>
-                        <TableCell>{model.dateAdded}</TableCell>
+                        <TableCell>{model.registeredAt}</TableCell>
+                        <TableCell>{model.apiUrl}</TableCell>
                         <TableCell className="text-right">
                           <Button 
                             variant="ghost" 
