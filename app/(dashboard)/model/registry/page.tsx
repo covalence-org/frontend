@@ -1,3 +1,4 @@
+import { createWithBaseURL } from '@/lib/utils';
 import { ModelRegistryClient } from './client';
 import { Metadata } from 'next';
 
@@ -23,7 +24,7 @@ export type RegisteredModel = {
 // This would be fetched from your Go API
 async function getModels(): Promise<RegisteredModel[]> {
   // In a real app, you'd fetch from your Go API
-  const res = await fetch('http://localhost:8080/model/list');
+  const res = await fetch(createWithBaseURL('/model/list'));
   
   const data = await res.json();
   const models = data.models;
@@ -65,7 +66,7 @@ async function getModels(): Promise<RegisteredModel[]> {
 // This would be fetched from your Go API (or could be part of your API docs)
 async function getProviderModels(): Promise<Record<string, ProviderModel[]>> {
   // In a real app, you would fetch from your Go API
-  const res = await fetch('http://localhost:8080/model/list/providers', { 
+  const res = await fetch(createWithBaseURL('/model/list/providers'), { 
     next: { revalidate: 3600 }, // Cache for 1 hour
   });
   const data = await res.json();
